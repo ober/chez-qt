@@ -96,47 +96,38 @@ Tests run headless using Qt's offscreen platform plugin (`QT_QPA_PLATFORM=offscr
 
 ### Running Examples
 
-All examples are standalone Chez Scheme scripts. Run them with:
-
-From the chez-qt directory:
+All examples are self-contained executables with shebangs. Just run them directly from anywhere:
 
 ```sh
-# Run any example (LD_LIBRARY_PATH is set by the Makefile's rpath, but set it if needed)
-scheme --libdirs . --script examples/hello.ss
-scheme --libdirs . --script examples/counter.ss
-scheme --libdirs . --script examples/form.ss
-scheme --libdirs . --script examples/editor.ss
-scheme --libdirs . --script examples/dashboard.ss
-scheme --libdirs . --script examples/filebrowser.ss
-scheme --libdirs . --script examples/styled.ss
-scheme --libdirs . --script examples/settings.ss
-scheme --libdirs . --script examples/painter.ss
-scheme --libdirs . --script examples/datainput.ss
-scheme --libdirs . --script examples/planner.ss
-scheme --libdirs . --script examples/autocomplete.ss
-scheme --libdirs . --script examples/modelviewer.ss
-scheme --libdirs . --script examples/polished.ss
-scheme --libdirs . --script examples/diagram.ss
-scheme --libdirs . --script examples/terminal.ss
-scheme --libdirs . --script examples/widgets.ss
-scheme --libdirs . --script examples/filemanager.ss
-scheme --libdirs . --script examples/wizard.ss
-scheme --libdirs . --script examples/mdi.ss
-scheme --libdirs . --script examples/dockable.ss
-scheme --libdirs . --script examples/trayapp.ss
-scheme --libdirs . --script examples/dragdrop.ss
-scheme --libdirs . --script examples/keyboard.ss
-scheme --libdirs . --script examples/dialogs.ss
-scheme --libdirs . --script examples/richtext.ss
+./examples/hello.ss
+./examples/counter.ss
+./examples/form.ss
+./examples/editor.ss
+./examples/dashboard.ss
 ```
 
-Or run headless (no display required):
+The shebang automatically resolves library paths relative to the script location, so examples work from any working directory:
 
 ```sh
-QT_QPA_PLATFORM=offscreen scheme --libdirs . --script examples/hello.ss
+cd /tmp
+/path/to/chez-qt/examples/hello.ss
+```
+
+Run headless (no display required):
+
+```sh
+QT_QPA_PLATFORM=offscreen ./examples/hello.ss
+```
+
+Or invoke manually without the shebang:
+
+```sh
+scheme --libdirs /path/to/chez-qt --script examples/hello.ss
 ```
 
 ### Using from the REPL
+
+From the chez-qt directory:
 
 ```sh
 scheme --libdirs .

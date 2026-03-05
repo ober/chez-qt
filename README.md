@@ -2,14 +2,14 @@
 
 Qt6 Widgets bindings for Chez Scheme.
 
-Build desktop GUI applications with native Qt6 widgets from Chez Scheme, using a thin C++ shim and Chez's FFI. API-compatible with [gerbil-qt](https://github.com/jafourni/gerbil-qt).
+Build desktop GUI applications with native Qt6 widgets from Chez Scheme, using a thin C++ shim and Chez's FFI. API-compatible with [gerbil-qt](https://github.com/ober/gerbil-qt).
 
 ## Requirements
 
 - [Chez Scheme](https://cisco.github.io/ChezScheme/) 10.0+
 - Qt6 development libraries
 - gcc
-- The [gerbil-qt](https://github.com/jafourni/gerbil-qt) C++ shim (provides `vendor/qt_shim.h` and `vendor/libqt_shim.so`)
+- The [gerbil-qt](https://github.com/ober/gerbil-qt) C++ shim (provides `vendor/qt_shim.h` and `vendor/libqt_shim.so`)
 
 ### Linux (Ubuntu/Debian)
 
@@ -32,18 +32,27 @@ export PKG_CONFIG_PATH="$(brew --prefix qt@6)/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 ## Build
 
-First, build gerbil-qt to get the C++ shim:
+First, clone and build [gerbil-qt](https://github.com/ober/gerbil-qt) to get the C++ shim:
 
 ```sh
-cd ~/mine/gerbil-qt
+git clone https://github.com/ober/gerbil-qt.git
+cd gerbil-qt
 make build
+cd ..
 ```
 
-Then build chez-qt:
+Then clone and build chez-qt:
 
 ```sh
-cd ~/mine/chez-qt
+git clone https://github.com/ober/chez-qt.git
+cd chez-qt
 make
+```
+
+By default, the Makefile expects gerbil-qt at `$HOME/mine/gerbil-qt`. Override with:
+
+```sh
+make GERBIL_QT_DIR=/path/to/gerbil-qt
 ```
 
 This compiles the Chez-specific callback bridge (`qt_chez_shim.so`) and the Scheme libraries (`chez-qt/ffi.so`, `chez-qt/qt.so`).
@@ -89,50 +98,48 @@ Tests run headless using Qt's offscreen platform plugin (`QT_QPA_PLATFORM=offscr
 
 All examples are standalone Chez Scheme scripts. Run them with:
 
-```sh
-# Set up the library path (required for every invocation)
-export LD_LIBRARY_PATH=~/mine/gerbil-qt/vendor:$LD_LIBRARY_PATH
+From the chez-qt directory:
 
-# Run any example
-scheme --libdirs ~/mine/chez-qt --script examples/hello.ss
-scheme --libdirs ~/mine/chez-qt --script examples/counter.ss
-scheme --libdirs ~/mine/chez-qt --script examples/form.ss
-scheme --libdirs ~/mine/chez-qt --script examples/editor.ss
-scheme --libdirs ~/mine/chez-qt --script examples/dashboard.ss
-scheme --libdirs ~/mine/chez-qt --script examples/filebrowser.ss
-scheme --libdirs ~/mine/chez-qt --script examples/styled.ss
-scheme --libdirs ~/mine/chez-qt --script examples/settings.ss
-scheme --libdirs ~/mine/chez-qt --script examples/painter.ss
-scheme --libdirs ~/mine/chez-qt --script examples/datainput.ss
-scheme --libdirs ~/mine/chez-qt --script examples/planner.ss
-scheme --libdirs ~/mine/chez-qt --script examples/autocomplete.ss
-scheme --libdirs ~/mine/chez-qt --script examples/modelviewer.ss
-scheme --libdirs ~/mine/chez-qt --script examples/polished.ss
-scheme --libdirs ~/mine/chez-qt --script examples/diagram.ss
-scheme --libdirs ~/mine/chez-qt --script examples/terminal.ss
-scheme --libdirs ~/mine/chez-qt --script examples/widgets.ss
-scheme --libdirs ~/mine/chez-qt --script examples/filemanager.ss
-scheme --libdirs ~/mine/chez-qt --script examples/wizard.ss
-scheme --libdirs ~/mine/chez-qt --script examples/mdi.ss
-scheme --libdirs ~/mine/chez-qt --script examples/dockable.ss
-scheme --libdirs ~/mine/chez-qt --script examples/trayapp.ss
-scheme --libdirs ~/mine/chez-qt --script examples/dragdrop.ss
-scheme --libdirs ~/mine/chez-qt --script examples/keyboard.ss
-scheme --libdirs ~/mine/chez-qt --script examples/dialogs.ss
-scheme --libdirs ~/mine/chez-qt --script examples/richtext.ss
+```sh
+# Run any example (LD_LIBRARY_PATH is set by the Makefile's rpath, but set it if needed)
+scheme --libdirs . --script examples/hello.ss
+scheme --libdirs . --script examples/counter.ss
+scheme --libdirs . --script examples/form.ss
+scheme --libdirs . --script examples/editor.ss
+scheme --libdirs . --script examples/dashboard.ss
+scheme --libdirs . --script examples/filebrowser.ss
+scheme --libdirs . --script examples/styled.ss
+scheme --libdirs . --script examples/settings.ss
+scheme --libdirs . --script examples/painter.ss
+scheme --libdirs . --script examples/datainput.ss
+scheme --libdirs . --script examples/planner.ss
+scheme --libdirs . --script examples/autocomplete.ss
+scheme --libdirs . --script examples/modelviewer.ss
+scheme --libdirs . --script examples/polished.ss
+scheme --libdirs . --script examples/diagram.ss
+scheme --libdirs . --script examples/terminal.ss
+scheme --libdirs . --script examples/widgets.ss
+scheme --libdirs . --script examples/filemanager.ss
+scheme --libdirs . --script examples/wizard.ss
+scheme --libdirs . --script examples/mdi.ss
+scheme --libdirs . --script examples/dockable.ss
+scheme --libdirs . --script examples/trayapp.ss
+scheme --libdirs . --script examples/dragdrop.ss
+scheme --libdirs . --script examples/keyboard.ss
+scheme --libdirs . --script examples/dialogs.ss
+scheme --libdirs . --script examples/richtext.ss
 ```
 
 Or run headless (no display required):
 
 ```sh
-QT_QPA_PLATFORM=offscreen scheme --libdirs ~/mine/chez-qt --script examples/hello.ss
+QT_QPA_PLATFORM=offscreen scheme --libdirs . --script examples/hello.ss
 ```
 
 ### Using from the REPL
 
 ```sh
-export LD_LIBRARY_PATH=~/mine/gerbil-qt/vendor:$LD_LIBRARY_PATH
-scheme --libdirs ~/mine/chez-qt
+scheme --libdirs .
 ```
 
 ```scheme

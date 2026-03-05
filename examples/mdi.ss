@@ -65,8 +65,8 @@
       ;; create initial document
       (new-document!)
       ;; layout
-      (let ((central (qt-widget-create))
-            (vlayout (qt-vbox-layout-create central)))
+      (let* ((central (qt-widget-create))
+             (vlayout (qt-vbox-layout-create central)))
         (qt-layout-add-widget! vlayout mdi)
         (qt-layout-add-widget! vlayout status)
         (qt-main-window-set-central-widget! win central))

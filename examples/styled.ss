@@ -55,7 +55,7 @@
       ;; Set up splitter
       (qt-splitter-add-widget! splitter scroll)
       (qt-splitter-add-widget! splitter right-panel)
-      (qt-splitter-set-sizes! splitter (list 300 500))
+      (qt-splitter-set-sizes! splitter 300 500)
       (qt-splitter-set-handle-width! splitter 4)
 
       ;; Key handler

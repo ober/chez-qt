@@ -43,12 +43,11 @@
            (btn-color (qt-push-button-create "Color Dialog"))
            (btn-progress (qt-push-button-create "Progress Dialog")))
 
-      (qt-plain-text-edit-set-read-only! log-area #t)
-      (qt-plain-text-edit-set-max-block-count! log-area 200)
-
-      ;; Helper
       (define (log! msg)
         (qt-plain-text-edit-append! log-area msg))
+
+      (qt-plain-text-edit-set-read-only! log-area #t)
+      (qt-plain-text-edit-set-max-block-count! log-area 200)
 
       ;; === Input Dialogs ===
       (qt-on-clicked! btn-text

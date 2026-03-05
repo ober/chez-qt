@@ -9,7 +9,7 @@
            (view (qt-graphics-view-create scene))
            (canvas (qt-paint-widget-create))
            (status (qt-label-create "Drag shapes in the scene, canvas paints live")))
-      (qt-graphics-view-set-render-hint! view QT_RENDER_ANTIALIASING)
+      (qt-graphics-view-set-render-hint! view QT_RENDER_ANTIALIASING #t)
       (qt-graphics-view-set-drag-mode! view QT_DRAG_RUBBER_BAND)
       (qt-graphics-scene-set-background! scene 245 245 245)
       (let ((box1 (qt-graphics-scene-add-rect! scene 20 30 120 80)))
@@ -39,7 +39,7 @@
                 (w (qt-paint-widget-width canvas))
                 (h (qt-paint-widget-height canvas)))
             (when painter
-              (qt-painter-fill-rect! painter 0 0 w h 30 30 50)
+              (qt-painter-fill-rect! painter 0 0 w h 30 30 50 255)
               (qt-painter-set-antialiasing! painter #t)
               (let loop ((i 0))
                 (when (< i 8)

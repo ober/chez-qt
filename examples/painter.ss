@@ -19,7 +19,7 @@
            (status-label (qt-label-create "QPainter Demo")))
 
       ;; Fill background
-      (qt-pixmap-fill! canvas 30 30 30)
+      (qt-pixmap-fill! canvas 30 30 30 255)
 
       ;; Enable antialiasing
       (qt-painter-set-antialiasing! p #t)
@@ -37,9 +37,9 @@
           (loop (+ y 20))))
 
       ;; Draw filled rectangles
-      (qt-painter-fill-rect! p 20 20 80 60 200 50 50)   ;; Red
-      (qt-painter-fill-rect! p 120 20 80 60 50 200 50)  ;; Green
-      (qt-painter-fill-rect! p 220 20 80 60 50 50 200)  ;; Blue
+      (qt-painter-fill-rect! p 20 20 80 60 200 50 50 255)   ;; Red
+      (qt-painter-fill-rect! p 120 20 80 60 50 200 50 255)  ;; Green
+      (qt-painter-fill-rect! p 220 20 80 60 50 50 200 255)  ;; Blue
 
       ;; Draw outlined rectangle with thick pen
       (qt-painter-set-pen-color! p 255 255 0)

@@ -18,29 +18,6 @@
            ;; Active process
            (proc #f))
 
-      ;; Configure output area
-      (qt-plain-text-edit-set-read-only! output #t)
-      (qt-plain-text-edit-set-max-block-count! output 10000)
-
-      ;; Configure input
-      (qt-line-edit-set-placeholder! input "Enter command...")
-
-      ;; Set monospace font
-      (let ((mono (qt-font-create "Monospace" 10)))
-        (qt-widget-set-font! output mono)
-        (qt-widget-set-font! input mono)
-        (qt-widget-set-font! prompt-label mono)
-        (qt-font-destroy! mono))
-
-      ;; Build input row
-      (qt-layout-add-widget! input-layout prompt-label)
-      (qt-layout-add-widget! input-layout input)
-      (qt-layout-add-widget! input-layout run-btn)
-
-      ;; Build main layout
-      (qt-layout-add-widget! layout output)
-      (qt-layout-add-widget! layout input-box)
-
       ;; Append text to output
       (define (append-output text)
         (qt-plain-text-edit-append! output text))
@@ -77,6 +54,29 @@
 
             ;; Start via sh -c
             (qt-process-start! proc "/bin/sh" (list "-c" cmd)))))
+
+      ;; Configure output area
+      (qt-plain-text-edit-set-read-only! output #t)
+      (qt-plain-text-edit-set-max-block-count! output 10000)
+
+      ;; Configure input
+      (qt-line-edit-set-placeholder! input "Enter command...")
+
+      ;; Set monospace font
+      (let ((mono (qt-font-create "Monospace" 10)))
+        (qt-widget-set-font! output mono)
+        (qt-widget-set-font! input mono)
+        (qt-widget-set-font! prompt-label mono)
+        (qt-font-destroy! mono))
+
+      ;; Build input row
+      (qt-layout-add-widget! input-layout prompt-label)
+      (qt-layout-add-widget! input-layout input)
+      (qt-layout-add-widget! input-layout run-btn)
+
+      ;; Build main layout
+      (qt-layout-add-widget! layout output)
+      (qt-layout-add-widget! layout input-box)
 
       ;; Connect signals
       (qt-on-clicked! run-btn (lambda () (run-command)))

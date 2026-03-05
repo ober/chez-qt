@@ -68,7 +68,7 @@
       ;; Splitter
       (qt-splitter-add-widget! splitter tree)
       (qt-splitter-add-widget! splitter detail-widget)
-      (qt-splitter-set-sizes! splitter (list 500 300))
+      (qt-splitter-set-sizes! splitter 500 300)
       (qt-splitter-set-stretch-factor! splitter 0 1)
       (qt-splitter-set-stretch-factor! splitter 1 0)
 

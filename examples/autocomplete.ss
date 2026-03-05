@@ -64,7 +64,7 @@
       (qt-frame-set-frame-shadow! search-frame QT_FRAME_RAISED)
 
       ;; Attach completer
-      (qt-completer-set-case-sensitivity! completer #f)
+      (qt-completer-set-case-sensitivity! completer QT_CASE_INSENSITIVE)
       (qt-completer-set-filter-mode! completer QT_MATCH_CONTAINS)
       (qt-completer-set-max-visible-items! completer 10)
       (qt-line-edit-set-completer! search-edit completer)

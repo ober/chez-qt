@@ -24,6 +24,7 @@
     qt-widget-create qt-widget-show! qt-widget-hide! qt-widget-close!
     qt-widget-set-enabled! qt-widget-enabled?
     qt-widget-set-visible! qt-widget-visible?
+    qt-widget-set-updates-enabled!
     qt-widget-set-fixed-size! qt-widget-set-minimum-size!
     qt-widget-set-maximum-size!
     qt-widget-set-minimum-width! qt-widget-set-minimum-height!
@@ -846,7 +847,19 @@
   ;; -----------------------------------------------------------------------
 
   (define (qt-app-create) (ffi-qt-app-create))
-  (define (qt-app-exec! app) (ffi-qt-app-exec app))
+  (define (qt-app-exec! app . args)
+    ;; qt_application_exec is a no-op in the C shim — the Qt event loop
+    ;; runs in a background pthread. Poll until the event loop exits.
+    ;; Optional first argument: a tick callback invoked every 50ms iteration.
+    ;; This allows the caller to merge periodic work (e.g. master timer) into
+    ;; the same Chez thread, eliminating multi-thread GC rendezvous deadlocks.
+    (ffi-qt-app-exec app)
+    (let ((tick (if (null? args) #f (car args))))
+      (let loop ()
+        (when (= (ffi-qt-app-is-running) 1)
+          (when tick (tick))
+          (sleep (make-time 'time-duration 50000000 0))
+          (loop)))))
   (define (qt-app-quit! app) (ffi-qt-app-quit app))
   (define (qt-app-process-events! app) (ffi-qt-app-process-events app))
 
@@ -885,6 +898,9 @@
     (ffi-qt-widget-set-visible w (if visible 1 0)))
   (define (qt-widget-visible? w)
     (not (zero? (ffi-qt-widget-is-visible w))))
+
+  (define (qt-widget-set-updates-enabled! w enabled)
+    (ffi-qt-widget-set-updates-enabled w (if enabled 1 0)))
 
   (define (qt-widget-set-fixed-size! w width height)
     (ffi-qt-widget-set-fixed-size w width height))
@@ -1493,8 +1509,25 @@
   (define (qt-splitter-count s) (ffi-qt-splitter-count s))
   (define qt-splitter-set-sizes!
     (case-lambda
+      [(s sizes)
+       ;; Accept a list of sizes and dispatch to the appropriate FFI call
+       (cond
+         [(and (pair? sizes) (= (length sizes) 2))
+          (ffi-qt-splitter-set-sizes-2 s (car sizes) (cadr sizes))]
+         [(and (pair? sizes) (= (length sizes) 3))
+          (ffi-qt-splitter-set-sizes-3 s (car sizes) (cadr sizes) (caddr sizes))]
+         [(and (pair? sizes) (= (length sizes) 4))
+          (ffi-qt-splitter-set-sizes-4 s (car sizes) (cadr sizes) (caddr sizes) (cadddr sizes))]
+         [(and (pair? sizes) (> (length sizes) 4))
+          ;; For 5+ children, use stretch factors for equal sizing
+          (let ((n (length sizes)))
+            (do ((i 0 (+ i 1)))
+                ((= i n))
+              (ffi-qt-splitter-set-stretch-factor s i 1)))]
+         [else (void)])]
       [(s a b)     (ffi-qt-splitter-set-sizes-2 s a b)]
-      [(s a b c)   (ffi-qt-splitter-set-sizes-3 s a b c)]))
+      [(s a b c)   (ffi-qt-splitter-set-sizes-3 s a b c)]
+      [(s a b c d) (ffi-qt-splitter-set-sizes-4 s a b c d)]))
   (define (qt-splitter-size-at s idx) (ffi-qt-splitter-size-at s idx))
   (define (qt-splitter-set-stretch-factor! s idx factor)
     (ffi-qt-splitter-set-stretch-factor s idx factor))
@@ -2142,7 +2175,8 @@
       (ffi-qt-completer-on-activated c id)
       (track-handler! c id)))
 
-  (define (qt-line-edit-set-completer! e c) (ffi-qt-line-edit-set-completer e c))
+  (define (qt-line-edit-set-completer! e c)
+    (when e (ffi-qt-line-edit-set-completer e (or c 0))))
   (define (qt-completer-destroy! c) (ffi-qt-completer-destroy c))
 
   ;; -----------------------------------------------------------------------

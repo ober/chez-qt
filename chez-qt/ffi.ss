@@ -11,12 +11,13 @@
 
     ;; Application lifecycle
     ffi-qt-app-create ffi-qt-app-exec ffi-qt-app-quit
-    ffi-qt-app-process-events ffi-qt-app-destroy
+    ffi-qt-app-process-events ffi-qt-app-destroy ffi-qt-app-is-running
 
     ;; Widget base
     ffi-qt-widget-create ffi-qt-widget-show ffi-qt-widget-hide
     ffi-qt-widget-close ffi-qt-widget-set-enabled ffi-qt-widget-is-enabled
     ffi-qt-widget-set-visible ffi-qt-widget-is-visible
+    ffi-qt-widget-set-updates-enabled
     ffi-qt-widget-set-fixed-size ffi-qt-widget-set-minimum-size
     ffi-qt-widget-set-maximum-size
     ffi-qt-widget-set-minimum-width ffi-qt-widget-set-minimum-height
@@ -203,7 +204,7 @@
     ffi-qt-splitter-create ffi-qt-splitter-add-widget
     ffi-qt-splitter-insert-widget ffi-qt-splitter-index-of
     ffi-qt-splitter-widget ffi-qt-splitter-count
-    ffi-qt-splitter-set-sizes-2 ffi-qt-splitter-set-sizes-3 ffi-qt-splitter-size-at
+    ffi-qt-splitter-set-sizes-2 ffi-qt-splitter-set-sizes-3 ffi-qt-splitter-set-sizes-4 ffi-qt-splitter-size-at
     ffi-qt-splitter-set-stretch-factor ffi-qt-splitter-set-handle-width
     ffi-qt-splitter-set-collapsible ffi-qt-splitter-is-collapsible
     ffi-qt-splitter-set-orientation
@@ -788,17 +789,28 @@
           (and script-dir script-dir))
         "."))
 
+  ;; In a static build (JEMACS_STATIC=1), both shims are compiled into the binary.
+  ;; With -Wl,--export-dynamic all symbols are visible; no load-shared-object needed.
+  ;; Chez's foreign-procedure resolves symbols from the binary's export table directly.
+  (define static-build?
+    (let ([v (getenv "JEMACS_STATIC")])
+      (and v (not (string=? v "")) (not (string=? v "0")))))
+
   ;; libqt_shim.so comes from gerbil-qt's vendor/ dir — use LD_LIBRARY_PATH or explicit env var
   (define qt-shim-loaded
-    (load-shared-object
-      (let ([qt-shim-dir (getenv "CHEZ_QT_SHIM_DIR")])
-        (if qt-shim-dir
-            (format "~a/libqt_shim.so" qt-shim-dir)
-            "libqt_shim.so"))))
+    (if static-build?
+        #f   ; symbols already linked in; --export-dynamic makes them visible
+        (load-shared-object
+          (let ([qt-shim-dir (getenv "CHEZ_QT_SHIM_DIR")])
+            (if qt-shim-dir
+                (format "~a/libqt_shim.so" qt-shim-dir)
+                "libqt_shim.so")))))
 
   (define chez-shim-loaded
-    (load-shared-object
-      (format "~a/qt_chez_shim.so" shim-dir)))
+    (if static-build?
+        #f   ; qt_chez_shim.c compiled into binary
+        (load-shared-object
+          (format "~a/qt_chez_shim.so" shim-dir))))
 
   ;; -----------------------------------------------------------------------
   ;; Callback registration (Chez → C shim)
@@ -882,6 +894,9 @@
   (define ffi-qt-app-destroy
     (foreign-procedure "qt_application_destroy" (void*) void))
 
+  (define ffi-qt-app-is-running
+    (foreign-procedure "qt_application_is_running" () int))
+
   (define ffi-qt-app-set-style-sheet
     (foreign-procedure "qt_application_set_style_sheet" (void* string) void))
 
@@ -912,6 +927,9 @@
 
   (define ffi-qt-widget-is-visible
     (foreign-procedure "qt_widget_is_visible" (void*) int))
+
+  (define ffi-qt-widget-set-updates-enabled
+    (foreign-procedure "qt_widget_set_updates_enabled" (void* int) void))
 
   (define ffi-qt-widget-set-fixed-size
     (foreign-procedure "qt_widget_set_fixed_size" (void* int int) void))
@@ -1601,6 +1619,8 @@
     (foreign-procedure "qt_splitter_set_sizes_2" (void* int int) void))
   (define ffi-qt-splitter-set-sizes-3
     (foreign-procedure "qt_splitter_set_sizes_3" (void* int int int) void))
+  (define ffi-qt-splitter-set-sizes-4
+    (foreign-procedure "qt_splitter_set_sizes_4" (void* int int int int) void))
   (define ffi-qt-splitter-size-at
     (foreign-procedure "qt_splitter_size_at" (void* int) int))
   (define ffi-qt-splitter-set-stretch-factor
@@ -2979,7 +2999,7 @@
 
   (define-optional-ffi ffi-qt-scintilla-create "qt_scintilla_create" (void*) void*)
   (define-optional-ffi ffi-qt-scintilla-destroy "qt_scintilla_destroy" (void*) void)
-  (define-optional-ffi ffi-qt-scintilla-send-message "qt_scintilla_send_message" (void* unsigned long) long)
+  (define-optional-ffi ffi-qt-scintilla-send-message "qt_scintilla_send_message" (void* unsigned unsigned-long long) long)
   (define-optional-ffi ffi-qt-scintilla-send-message-string "qt_scintilla_send_message_string" (void* unsigned unsigned-long string) long)
   (define-optional-ffi ffi-qt-scintilla-receive-string "qt_scintilla_receive_string" (void* unsigned unsigned-long) string)
   (define-optional-ffi ffi-qt-scintilla-set-text "qt_scintilla_set_text" (void* string) void)

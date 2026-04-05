@@ -24,7 +24,8 @@
     qt-widget-create qt-widget-show! qt-widget-hide! qt-widget-close!
     qt-widget-set-enabled! qt-widget-enabled?
     qt-widget-set-visible! qt-widget-visible?
-    qt-widget-set-updates-enabled!
+    qt-widget-set-updates-enabled! qt-widget-set-attribute!
+    qt-send-key-press! qt-send-key-release!
     qt-widget-set-fixed-size! qt-widget-set-minimum-size!
     qt-widget-set-maximum-size!
     qt-widget-set-minimum-width! qt-widget-set-minimum-height!
@@ -211,11 +212,12 @@
 
     ;; Keyboard Events
     qt-on-key-press! qt-on-key-press-consuming!
-    qt-last-key-code qt-last-key-modifiers qt-last-key-text
+    qt-last-key-code qt-last-key-modifiers qt-last-key-text qt-last-key-autorepeat?
 
     ;; Pixmap
     qt-pixmap-load qt-pixmap-width qt-pixmap-height
     qt-pixmap-null? qt-pixmap-scaled qt-pixmap-destroy!
+    qt-pixmap-save! qt-widget-grab qt-widget-screenshot!
     qt-label-set-pixmap!
 
     ;; Icon
@@ -486,6 +488,10 @@
     qt-plain-text-edit-line-from-position qt-plain-text-edit-line-end-position
     qt-plain-text-edit-find-text
     qt-plain-text-edit-ensure-cursor-visible! qt-plain-text-edit-center-cursor!
+    qt-plain-text-edit-clear-extra-selections!
+    qt-plain-text-edit-add-extra-selection-line!
+    qt-plain-text-edit-add-extra-selection-range!
+    qt-plain-text-edit-apply-extra-selections!
     qt-text-document-create qt-plain-text-document-create
     qt-text-document-destroy!
     qt-plain-text-edit-document qt-plain-text-edit-set-document!
@@ -590,12 +596,6 @@
     qt-line-number-area-set-visible!
     qt-line-number-area-set-bg-color! qt-line-number-area-set-fg-color!
 
-    ;; Extra selections
-    qt-plain-text-edit-clear-extra-selections!
-    qt-plain-text-edit-add-extra-selection-line!
-    qt-plain-text-edit-add-extra-selection-range!
-    qt-plain-text-edit-apply-extra-selections!
-
     ;; Completer on editor
     qt-completer-set-widget! qt-completer-complete-rect!
 
@@ -605,6 +605,8 @@
     qt-scintilla-receive-string
     qt-scintilla-set-text! qt-scintilla-get-text qt-scintilla-get-text-length
     qt-scintilla-set-lexer-language! qt-scintilla-get-lexer-language
+    qt-scintilla-lexer-set-color! qt-scintilla-lexer-set-paper!
+    qt-scintilla-lexer-set-font-attr!
     qt-scintilla-set-read-only! qt-scintilla-read-only?
     qt-scintilla-set-margin-width! qt-scintilla-set-margin-type!
     qt-scintilla-set-focus!
@@ -901,6 +903,15 @@
 
   (define (qt-widget-set-updates-enabled! w enabled)
     (ffi-qt-widget-set-updates-enabled w (if enabled 1 0)))
+
+  (define (qt-widget-set-attribute! w attribute on)
+    (ffi-qt-widget-set-attribute w attribute (if on 1 0)))
+
+  (define (qt-send-key-press! w key mods text)
+    (ffi-qt-send-key-event w 0 key mods text))
+
+  (define (qt-send-key-release! w key mods text)
+    (ffi-qt-send-key-event w 1 key mods text))
 
   (define (qt-widget-set-fixed-size! w width height)
     (ffi-qt-widget-set-fixed-size w width height))
@@ -1556,6 +1567,7 @@
   (define (qt-last-key-code) (ffi-qt-last-key-code))
   (define (qt-last-key-modifiers) (ffi-qt-last-key-modifiers))
   (define (qt-last-key-text) (ffi-qt-last-key-text))
+  (define (qt-last-key-autorepeat?) (not (zero? (ffi-qt-last-key-autorepeat))))
 
   ;; -----------------------------------------------------------------------
   ;; Pixmap
@@ -1567,6 +1579,16 @@
   (define (qt-pixmap-null? p) (not (zero? (ffi-qt-pixmap-is-null p))))
   (define (qt-pixmap-scaled p w h mode) (ffi-qt-pixmap-scaled p w h mode))
   (define (qt-pixmap-destroy! p) (ffi-qt-pixmap-destroy p))
+  (define (qt-pixmap-save! p path format)
+    (not (zero? (ffi-qt-pixmap-save p path (or format "PNG")))))
+  (define (qt-widget-grab w) (ffi-qt-widget-grab w))
+  (define (qt-widget-screenshot! w path)
+    (let ((px (ffi-qt-widget-grab w)))
+      (if (eqv? px 0)
+          #f
+          (let ((ok (not (zero? (ffi-qt-pixmap-save px path "PNG")))))
+            (ffi-qt-pixmap-destroy px)
+            ok))))
 
   ;; -----------------------------------------------------------------------
   ;; Icon
@@ -2816,6 +2838,9 @@
   (define (qt-scintilla-get-text-length sci) (ffi-qt-scintilla-get-text-length sci))
   (define (qt-scintilla-set-lexer-language! sci lang) (ffi-qt-scintilla-set-lexer-language sci lang))
   (define (qt-scintilla-get-lexer-language sci) (ffi-qt-scintilla-get-lexer-language sci))
+  (define (qt-scintilla-lexer-set-color! sci style color) (ffi-qt-scintilla-lexer-set-color sci style color))
+  (define (qt-scintilla-lexer-set-paper! sci style color) (ffi-qt-scintilla-lexer-set-paper sci style color))
+  (define (qt-scintilla-lexer-set-font-attr! sci style bold italic) (ffi-qt-scintilla-lexer-set-font-attr sci style bold italic))
   (define (qt-scintilla-set-read-only! sci val) (ffi-qt-scintilla-set-read-only sci (if val 1 0)))
   (define (qt-scintilla-read-only? sci) (not (zero? (ffi-qt-scintilla-is-read-only sci))))
   (define (qt-scintilla-set-margin-width! sci margin width) (ffi-qt-scintilla-set-margin-width sci margin width))

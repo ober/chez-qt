@@ -17,7 +17,8 @@
     ffi-qt-widget-create ffi-qt-widget-show ffi-qt-widget-hide
     ffi-qt-widget-close ffi-qt-widget-set-enabled ffi-qt-widget-is-enabled
     ffi-qt-widget-set-visible ffi-qt-widget-is-visible
-    ffi-qt-widget-set-updates-enabled
+    ffi-qt-widget-set-updates-enabled ffi-qt-widget-set-attribute
+    ffi-qt-send-key-event
     ffi-qt-widget-set-fixed-size ffi-qt-widget-set-minimum-size
     ffi-qt-widget-set-maximum-size
     ffi-qt-widget-set-minimum-width ffi-qt-widget-set-minimum-height
@@ -212,10 +213,12 @@
     ;; Keyboard Events
     ffi-qt-install-key-handler ffi-qt-install-key-handler-consuming
     ffi-qt-last-key-code ffi-qt-last-key-modifiers ffi-qt-last-key-text
+    ffi-qt-last-key-autorepeat
 
     ;; Pixmap
     ffi-qt-pixmap-load ffi-qt-pixmap-width ffi-qt-pixmap-height
     ffi-qt-pixmap-is-null ffi-qt-pixmap-scaled ffi-qt-pixmap-destroy
+    ffi-qt-pixmap-save ffi-qt-widget-grab
     ffi-qt-label-set-pixmap
 
     ;; Icon
@@ -770,6 +773,8 @@
     ffi-qt-scintilla-receive-string
     ffi-qt-scintilla-set-text ffi-qt-scintilla-get-text ffi-qt-scintilla-get-text-length
     ffi-qt-scintilla-set-lexer-language ffi-qt-scintilla-get-lexer-language
+    ffi-qt-scintilla-lexer-set-color ffi-qt-scintilla-lexer-set-paper
+    ffi-qt-scintilla-lexer-set-font-attr
     ffi-qt-scintilla-set-read-only ffi-qt-scintilla-is-read-only
     ffi-qt-scintilla-set-margin-width ffi-qt-scintilla-set-margin-type
     ffi-qt-scintilla-set-focus
@@ -796,21 +801,28 @@
     (let ([v (getenv "JEMACS_STATIC")])
       (and v (not (string=? v "")) (not (string=? v "0")))))
 
-  ;; libqt_shim.so comes from gerbil-qt's vendor/ dir — use LD_LIBRARY_PATH or explicit env var
+  (define shlib-ext
+    (let ((mt (symbol->string (machine-type))))
+      (if (and (>= (string-length mt) 3)
+               (string=? (substring mt (- (string-length mt) 3) (string-length mt)) "osx"))
+          "dylib"
+          "so")))
+
+  ;; libqt_shim.{so,dylib} comes from gerbil-qt's vendor/ dir — use DYLD_LIBRARY_PATH/LD_LIBRARY_PATH or explicit env var
   (define qt-shim-loaded
     (if static-build?
         #f   ; symbols already linked in; --export-dynamic makes them visible
         (load-shared-object
           (let ([qt-shim-dir (getenv "CHEZ_QT_SHIM_DIR")])
             (if qt-shim-dir
-                (format "~a/libqt_shim.so" qt-shim-dir)
-                "libqt_shim.so")))))
+                (format "~a/libqt_shim.~a" qt-shim-dir shlib-ext)
+                (format "libqt_shim.~a" shlib-ext))))))
 
   (define chez-shim-loaded
     (if static-build?
         #f   ; qt_chez_shim.c compiled into binary
         (load-shared-object
-          (format "~a/qt_chez_shim.so" shim-dir))))
+          (format "~a/qt_chez_shim.~a" shim-dir shlib-ext))))
 
   ;; -----------------------------------------------------------------------
   ;; Callback registration (Chez → C shim)
@@ -930,6 +942,12 @@
 
   (define ffi-qt-widget-set-updates-enabled
     (foreign-procedure "qt_widget_set_updates_enabled" (void* int) void))
+
+  (define ffi-qt-widget-set-attribute
+    (foreign-procedure "qt_widget_set_attribute" (void* int int) void))
+
+  (define ffi-qt-send-key-event
+    (foreign-procedure "qt_send_key_event" (void* int int int string) void))
 
   (define ffi-qt-widget-set-fixed-size
     (foreign-procedure "qt_widget_set_fixed_size" (void* int int) void))
@@ -1648,6 +1666,8 @@
     (foreign-procedure "qt_last_key_modifiers" () int))
   (define ffi-qt-last-key-text
     (foreign-procedure "qt_last_key_text" () string))
+  (define ffi-qt-last-key-autorepeat
+    (foreign-procedure "qt_last_key_autorepeat" () int))
 
   ;; -----------------------------------------------------------------------
   ;; Pixmap
@@ -1665,6 +1685,10 @@
     (foreign-procedure "qt_pixmap_scaled" (void* int int int) void*))
   (define ffi-qt-pixmap-destroy
     (foreign-procedure "qt_pixmap_destroy" (void*) void))
+  (define ffi-qt-pixmap-save
+    (foreign-procedure "qt_pixmap_save" (void* string string) int))
+  (define ffi-qt-widget-grab
+    (foreign-procedure "qt_widget_grab" (void*) void*))
 
   ;; -----------------------------------------------------------------------
   ;; Icon
@@ -3007,6 +3031,9 @@
   (define-optional-ffi ffi-qt-scintilla-get-text-length "qt_scintilla_get_text_length" (void*) int)
   (define-optional-ffi ffi-qt-scintilla-set-lexer-language "qt_scintilla_set_lexer_language" (void* string) void)
   (define-optional-ffi ffi-qt-scintilla-get-lexer-language "qt_scintilla_get_lexer_language" (void*) string)
+  (define-optional-ffi ffi-qt-scintilla-lexer-set-color "qt_scintilla_lexer_set_color" (void* int int) void)
+  (define-optional-ffi ffi-qt-scintilla-lexer-set-paper "qt_scintilla_lexer_set_paper" (void* int int) void)
+  (define-optional-ffi ffi-qt-scintilla-lexer-set-font-attr "qt_scintilla_lexer_set_font_attr" (void* int int int) void)
   (define-optional-ffi ffi-qt-scintilla-set-read-only "qt_scintilla_set_read_only" (void* int) void)
   (define-optional-ffi ffi-qt-scintilla-is-read-only "qt_scintilla_is_read_only" (void*) int)
   (define-optional-ffi ffi-qt-scintilla-set-margin-width "qt_scintilla_set_margin_width" (void* int int) void)
